@@ -1,0 +1,117 @@
+scalar Date
+
+##################################################################
+
+type Query {
+  grades(id: ID): [Grade!]!
+  classrooms(id: ID): [Classroom!]!
+  students(id: ID): [Student!]!
+  subjects(id: ID): [Subject!]!
+  teachers(id: ID): [Teacher!]!
+  secctions(id: ID): [Secction!]!
+}
+
+##################################################################
+
+type Mutation {
+  createGrade(number: Int!): Grade
+  createStudent(input: StudentInput!): Student!
+  createTeacher(input: TeacherInput!): Teacher!
+  createSecction(input: SecctionInput!): Secction!
+  createClassroom(secctionId: ID!): Classroom!
+  ############
+  addStudentToGrade(gradeId: ID!, studentId: ID): Grade!
+  addStudentToClassroom(classroomId: ID!, studentId: ID!): Classroom!
+}
+
+##################################################################
+
+type Classroom{
+  id: ID!
+  secction: Secction!
+  students: [Student!]!
+  # schedule:
+  # isFavorite:
+}
+
+##################################################################
+
+type Secction{
+  id: ID!
+  l: String!
+  grade: Grade!
+}
+
+input SecctionInput{
+  l: String!
+  grade: ID!
+}
+
+##################################################################
+
+type Grade{
+  id: ID!
+  number: Int!
+  students: [Student!]!
+  teachers: [Teacher!]!
+}
+
+##################################################################
+type Student{
+  id: ID!
+  first_name:String!
+  last_name: String!
+  ci: Int!
+  joined: Date!
+  graduate: Date
+  # notes: [Note!]!
+}
+
+input StudentInput{
+  first_name:String!
+  last_name: String!
+  ci: Int!
+  joined: Date!
+  graduate: Date
+  # notes: [Note!]!
+}
+
+##################################################################
+
+type Subject{
+  _id: ID!
+  teachers: [Teacher!]!
+  name: String!
+}
+
+##################################################################
+
+type Teacher{
+  first_name: String!
+  last_name: String!
+  joined: Date!
+  left: Date
+  ci: Int!
+  assigned_subjects: [Subject!]!
+}
+
+input TeacherInput{
+  first_name: String!
+  last_name: String!
+  joined: Date!
+  left: Date
+  ci: Int!
+  # assigned_subjects: [Subject!]!
+}
+
+##################################################################
+
+enum Weekday{
+  Monday
+  Tuesday
+  Wednesday
+  Thursday
+  Friday
+  Satruday
+  Sunday
+} 

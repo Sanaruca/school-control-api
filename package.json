@@ -1,0 +1,17 @@
+{
+  "name": "school-control",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon ./src/index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "apollo-server": "^2.23.0",
+    "mongoose": "^5.12.7",
+    "validator": "^13.6.0"
+  }
+}
