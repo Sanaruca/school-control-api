@@ -19,7 +19,7 @@ module.exports = {
         throw new Error(error);
       }
     },
-    students: async (_, { id }) => await Student.find(id ? { _id: id } : {}),
+    students: async (_, { id }) => await Student.find(id ? { _id: id } : {}).populate("curentGrade"),
     teachers: async (_, { id }) => await Teacher.find(id ? { _id: id } : {}),
     secctions: async (_, { id }) =>
       await Secction.find(id ? { _id: id } : {}).populate("grade"),

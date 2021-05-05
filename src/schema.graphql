@@ -64,6 +64,7 @@ type Student{
   ci: Int!
   joined: Date!
   graduate: Date
+  curentGrade: Grade
   # notes: [Note!]!
 }
 
