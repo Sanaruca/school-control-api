@@ -8,18 +8,17 @@ const gradeSchema = new Schema({
 });
 
 let cache;
+let studentId;
 
 // check Student is found
 gradeSchema.pre("save", async function () {
   try {
-    console.log(this);
     if (!this.students.length) return;
 
-    const studentId = this.students[0];
+    studentId = this.students[0];
 
     const student = await Student.findById(studentId);
     if (!student) throw new Error("Student id not found");
-
   } catch (error) {
     throw error;
   }
@@ -32,7 +31,18 @@ gradeSchema.pre("save", async function () {
 
     const isFound = await Grade.findOne({ students: this.students[0] });
     if (isFound) throw new Error("Student is already on the list");
+  } catch (error) {
+    throw error;
+  }
+});
 
+//////////////////////////////////////////////////////////////////////
+
+// update curentGrade for Student
+gradeSchema.post("save", async function (doc) {
+  try {
+    console.log(doc.id)
+    await Student.findByIdAndUpdate(studentId, {curentGrade: doc._id})
   } catch (error) {
     throw error;
   }
