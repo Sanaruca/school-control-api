@@ -6,7 +6,17 @@ const Teacher = require("../models/teacher");
 const Secction = require("../models/secction");
 const Classroom = require("../models/classroom");
 
-module.exports = {
+const findGrade = async (id) => {
+  try {
+    const grade = await Grade.findById(id);
+    if (!grade) throw new Error("Grade not found");
+    return grade;
+  } catch (error) {
+    throw error;
+  }
+}
+
+const resolvers = {
   Date: DateScalar,
   Query: {
     grades: async (_, { id }) => {
@@ -19,7 +29,8 @@ module.exports = {
         throw new Error(error);
       }
     },
-    students: async (_, { id }) => await Student.find(id ? { _id: id } : {}).populate("curentGrade"),
+    students: async (_, { id }) =>
+      await Student.find(id ? { _id: id } : {}).populate("curentGrade"),
     teachers: async (_, { id }) => await Teacher.find(id ? { _id: id } : {}),
     secctions: async (_, { id }) =>
       await Secction.find(id ? { _id: id } : {}).populate("grade"),
@@ -68,8 +79,7 @@ module.exports = {
 
     addStudentToGrade: async (_, { gradeId, studentId }) => {
       try {
-        const grade = await Grade.findById(gradeId);
-        if (!grade) throw new Error("Grade not found");
+        const grade = await findGrade(gradeId);
         grade.students.unshift(studentId);
         await grade.save();
 
@@ -95,5 +105,36 @@ module.exports = {
         throw error;
       }
     },
+
+    ///////////////////////////////////////////////////////////////
+
+    removeStudentFromGrade: async (_, { gradeId, studentId }) => {
+      try {
+        const grade = await findGrade(gradeId);
+
+        //? may be this is not necesary
+        if (!grade.students.includes(studentId))
+          throw new Error(
+            "The 'student' ID is not found on list 'grade.students'"
+          );
+
+        await grade.update({ $pull: { students: studentId } });
+        const student = await Student.findByIdAndUpdate(
+          studentId,
+          { $unset: { curentGrade: "" } },
+          { new: true }
+        );
+
+        return student;
+      } catch (error) {
+        throw error;
+      }
+    },
+
+    ///////////////////////////////////////////////////////////////
+
+    
   },
 };
+
+module.exports = resolvers;

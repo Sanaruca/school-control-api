@@ -10,7 +10,7 @@ const gradeSchema = new Schema({
 let cache;
 let studentId;
 
-// check Student is found
+// check Student is found // for addStudent
 gradeSchema.pre("save", async function () {
   try {
     if (!this.students.length) return;
@@ -24,7 +24,7 @@ gradeSchema.pre("save", async function () {
   }
 });
 
-// check unique student in doc // for update
+// check unique student in Model // for addStudent
 gradeSchema.pre("save", async function () {
   try {
     if (!this.students.length) return;
@@ -38,10 +38,13 @@ gradeSchema.pre("save", async function () {
 
 //////////////////////////////////////////////////////////////////////
 
+// gradeSchema
+
+//////////////////////////////////////////////////////////////////////
+
 // update curentGrade for Student
 gradeSchema.post("save", async function (doc) {
   try {
-    console.log(doc.id)
     await Student.findByIdAndUpdate(studentId, {curentGrade: doc._id})
   } catch (error) {
     throw error;

@@ -21,7 +21,11 @@ type Mutation {
   createClassroom(secctionId: ID!): Classroom!
   ############
   addStudentToGrade(gradeId: ID!, studentId: ID): Grade!
+  removeStudentFromGrade(gradeId: ID!, studentId: ID): Student!
+  ############
   addStudentToClassroom(classroomId: ID!, studentId: ID!): Classroom!
+  ############
+
 }
 
 ##################################################################
@@ -57,6 +61,7 @@ type Grade{
 }
 
 ##################################################################
+
 type Student{
   id: ID!
   first_name:String!
