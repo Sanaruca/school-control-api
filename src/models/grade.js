@@ -1,5 +1,6 @@
 const { Schema, model, SchemaTypes } = require("mongoose");
 const Student = require("./student");
+const Classroom = require("./classroom");
 
 const gradeSchema = new Schema({
   number: { type: Number, unique: true, required: true },
@@ -38,7 +39,16 @@ gradeSchema.pre("save", async function () {
 
 //////////////////////////////////////////////////////////////////////
 
-// gradeSchema
+// delete student from classroom.students
+gradeSchema.pre("update", async function (next) {
+  console.log("-------------------------------------------")
+  const studentId = this._update.$pull.students;
+  console.log(studentId)
+  console.log("-------------------------------------------")
+  const classroom = await Classroom.findOne()
+  console.log(classroom)
+  next()
+})
 
 //////////////////////////////////////////////////////////////////////
 

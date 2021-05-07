@@ -8,6 +8,8 @@ const secctionSchema = new Schema({
 
 // check grade field is found
 secctionSchema.pre("save", async function () {
+  console.log(this.grade)
+  console.log(Grade.findOne);
   const isFoud = await Grade.findById(this.grade);
   if (!isFoud) throw new Error("'grade' field not foud");
 });
