@@ -1,7 +1,7 @@
-const { Schema, model, SchemaTypes } = require("mongoose");
+const { Schema, model, SchemaTypes, Types, connection } = require("mongoose"),
+  { ObjectId } = Types;
 const Secction = require("./secction");
 const Student = require("./student");
-const Grade = require("./grade");
 
 const classroomSchema = new Schema({
   secction: { type: SchemaTypes.ObjectId, ref: "Secction", unique: true },
@@ -36,9 +36,9 @@ classroomSchema.pre("save", async function () {
 classroomSchema.pre("save", async function () {
   if (!this.students.length) return;
 
-  const isOnGradeList = (await Grade.findById(cache.grade)).students.includes(
-    studentId
-  );
+  const isOnGradeList = await connection
+    .collection("grades")
+    .findOne({ _id: ObjectId(cache.grade) });
 
   if (!isOnGradeList) throw new Error("'student' ID is not on 'Grade List'");
 });
@@ -46,7 +46,8 @@ classroomSchema.pre("save", async function () {
 // check student is no Duplicate
 classroomSchema.pre("save", async function () {
   try {
-    if (this.students.includes(studentId)) throw new Error("'student' ID is already on the list");
+    if (this.students.includes(studentId))
+      throw new Error("'student' ID is already on the list");
   } catch (error) {
     throw error;
   }

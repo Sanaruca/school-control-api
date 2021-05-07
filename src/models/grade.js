@@ -1,4 +1,4 @@
-const { Schema, model, SchemaTypes } = require("mongoose");
+const { Schema, model, SchemaTypes, connection} = require("mongoose");
 const Student = require("./student");
 const Classroom = require("./classroom");
 
