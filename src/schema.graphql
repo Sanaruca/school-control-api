@@ -9,6 +9,9 @@ type Query {
   subjects(id: ID): [Subject!]!
   teachers(id: ID): [Teacher!]!
   secctions(id: ID): [Secction!]!
+  ############
+  getGrade(number: Int!): Grade
+  getStudent(ci: Int!): Student
 }
 
 ##################################################################

@@ -14,7 +14,7 @@ const findGrade = async (id) => {
   } catch (error) {
     throw error;
   }
-}
+};
 
 const resolvers = {
   Date: DateScalar,
@@ -41,6 +41,12 @@ const resolvers = {
           populate: { path: "grade", populate: { path: "students" } },
         })
         .populate("students"),
+
+    ///////////////////////////////////////////////////////////////
+
+        getGrade: async (_,{number}) => await Grade.findOne({number}).populate("students"),
+        getStudent: async (_,{ci}) => await Student.findOne({ci}).populate("currentGrade")
+
   },
 
   Mutation: {
@@ -132,8 +138,6 @@ const resolvers = {
     },
 
     ///////////////////////////////////////////////////////////////
-
-    
   },
 };
 
