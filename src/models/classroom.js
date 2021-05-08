@@ -35,10 +35,12 @@ classroomSchema.pre("save", async function () {
 // check student is already on the list of grade.students
 classroomSchema.pre("save", async function () {
   if (!this.students.length) return;
-
-  const isOnGradeList = await connection
-    .collection("grades")
-    .findOne({ _id: ObjectId(cache.grade) });
+  
+  const grade = await connection
+  .collection("grades")
+  .findOne({ _id: ObjectId(cache.grade) });
+  
+  const isOnGradeList = grade.students.includes(studentId)
 
   if (!isOnGradeList) throw new Error("'student' ID is not on 'Grade List'");
 });
@@ -46,7 +48,7 @@ classroomSchema.pre("save", async function () {
 // check student is no Duplicate
 classroomSchema.pre("save", async function () {
   try {
-    if (this.students.includes(studentId))
+    if (this.students.includes(studentId, 1))
       throw new Error("'student' ID is already on the list");
   } catch (error) {
     throw error;

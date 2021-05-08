@@ -8,8 +8,6 @@ const secctionSchema = new Schema({
 
 // check grade field is found
 secctionSchema.pre("save", async function () {
-  console.log(this.grade);
-  console.log(Grade.findOne);
 
   const isFoud = await connection
     .collection("grades")
