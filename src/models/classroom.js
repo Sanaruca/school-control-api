@@ -1,20 +1,20 @@
 const { Schema, model, SchemaTypes, Types, connection } = require("mongoose"),
   { ObjectId } = Types;
-const Secction = require("./secction");
+const Section = require("./section");
 const Student = require("./student");
 
 const classroomSchema = new Schema({
-  secction: { type: SchemaTypes.ObjectId, ref: "Secction", unique: true },
+  section: { type: SchemaTypes.ObjectId, ref: "Section", unique: true },
   students: [{ type: SchemaTypes.ObjectId, ref: "Student" }],
   schedule: { type: SchemaTypes.ObjectId, ref: "Schedule" },
   //isFavorite: Boolean,
 });
 
 let cache;
-// check secction ID is foud
+// check section ID is foud
 classroomSchema.pre("save", async function () {
-  const secctionIsFound = (cache = await Secction.findById(this.secction));
-  if (!secctionIsFound) throw new Error("The 'secction' ID is not found");
+  const sectionIsFound = (cache = await Section.findById(this.section));
+  if (!sectionIsFound) throw new Error("The 'section' ID is not found");
 });
 
 let studentId;

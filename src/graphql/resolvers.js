@@ -3,7 +3,7 @@ const DateScalar = require("./dateScalar");
 const Grade = require("../models/grade");
 const Student = require("../models/student");
 const Teacher = require("../models/teacher");
-const Secction = require("../models/secction");
+const Section = require("../models/section");
 const Classroom = require("../models/classroom");
 
 const findGrade = async (id) => {
@@ -32,12 +32,12 @@ const resolvers = {
     students: async (_, { id }) =>
       await Student.find(id ? { _id: id } : {}).populate("curentGrade"),
     teachers: async (_, { id }) => await Teacher.find(id ? { _id: id } : {}),
-    secctions: async (_, { id }) =>
-      await Secction.find(id ? { _id: id } : {}).populate("grade"),
+    sections: async (_, { id }) =>
+      await Section.find(id ? { _id: id } : {}).populate("grade"),
     classrooms: async (_, { id }) =>
       await Classroom.find(id ? { _id: id } : {})
         .populate({
-          path: "secction",
+          path: "section",
           populate: { path: "grade", populate: { path: "students" } },
         })
         .populate("students"),
@@ -45,7 +45,8 @@ const resolvers = {
     ///////////////////////////////////////////////////////////////
 
         getGrade: async (_,{number}) => await Grade.findOne({number}).populate("students"),
-        getStudent: async (_,{ci}) => await Student.findOne({ci}).populate("currentGrade")
+        getStudent: async (_,{ci}) => await Student.findOne({ci}).populate("currentGrade"),
+        // getClassroom: async (_,{ci}) => await Student.findOne({ci}).populate("currentGrade")
 
   },
 
@@ -67,18 +68,18 @@ const resolvers = {
       return await teacher.save();
     },
 
-    createSecction: async (_, { input: data }) => {
+    createSection: async (_, { input: data }) => {
       // --------
-      const secction = new Secction(data);
-      await secction.save();
-      const savedSecction = await Secction.findOne(secction).populate("grade");
-      return savedSecction;
+      const section = new Section(data);
+      await section.save();
+      const savedSection = await Section.findOne(section).populate("grade");
+      return savedSection;
     },
 
-    createClassroom: async (_, { secctionId: secction }) => {
-      const classroom = new Classroom({ secction });
+    createClassroom: async (_, { sectionId: section }) => {
+      const classroom = new Classroom({ section });
       const savedClassroom = await classroom.save();
-      return await savedClassroom.populate("secction").execPopulate();
+      return await savedClassroom.populate("section").execPopulate();
     },
 
     ///////////////////////////////////////////////////////////////
@@ -105,7 +106,7 @@ const resolvers = {
 
         return await classroom
           .populate("students")
-          .populate("secction")
+          .populate("section")
           .execPopulate();
       } catch (error) {
         throw error;
