@@ -3,12 +3,11 @@ const DateScalar = require("./dateScalar");
 const Grade = require("../models/grade");
 const Student = require("../models/student");
 const Teacher = require("../models/teacher");
-const Section = require("../models/section");
 const Classroom = require("../models/classroom");
 
-const findGrade = async (id) => {
+const findGrade = async (number) => {
   try {
-    const grade = await Grade.findById(id);
+    const grade = await Grade.findOne({ number });
     if (!grade) throw new Error("Grade not found");
     return grade;
   } catch (error) {
@@ -32,22 +31,18 @@ const resolvers = {
     students: async (_, { id }) =>
       await Student.find(id ? { _id: id } : {}).populate("curentGrade"),
     teachers: async (_, { id }) => await Teacher.find(id ? { _id: id } : {}),
-    sections: async (_, { id }) =>
-      await Section.find(id ? { _id: id } : {}).populate("grade"),
     classrooms: async (_, { id }) =>
       await Classroom.find(id ? { _id: id } : {})
-        .populate({
-          path: "section",
-          populate: { path: "grade", populate: { path: "students" } },
-        })
+        .populate({ path: "grade", populate: { path: "students" } })
         .populate("students"),
 
     ///////////////////////////////////////////////////////////////
 
-        getGrade: async (_,{number}) => await Grade.findOne({number}).populate("students"),
-        getStudent: async (_,{ci}) => await Student.findOne({ci}).populate("currentGrade"),
-        // getClassroom: async (_,{ci}) => await Student.findOne({ci}).populate("currentGrade")
-
+    getGrade: async (_, { number }) =>
+      await Grade.findOne({ number }).populate("students"),
+    getStudent: async (_, { ci }) =>
+      await Student.findOne({ ci }).populate("currentGrade"),
+    // getClassroom: async (_,{ci}) => await Student.findOne({ci}).populate("currentGrade")
   },
 
   Mutation: {
@@ -68,26 +63,29 @@ const resolvers = {
       return await teacher.save();
     },
 
-    createSection: async (_, { input: data }) => {
-      // --------
-      const section = new Section(data);
-      await section.save();
-      const savedSection = await Section.findOne(section).populate("grade");
-      return savedSection;
-    },
+    createClassroom: async (_, { gradeNumber, section }) => {
+      //-----------------------
+      try {
+        const grade = await Grade.findOne({ number: gradeNumber });
+        if (!grade) throw new Error("grade not found");
 
-    createClassroom: async (_, { sectionId: section }) => {
-      const classroom = new Classroom({ section });
-      const savedClassroom = await classroom.save();
-      return await savedClassroom.populate("section").execPopulate();
+        const classroom = new Classroom({ section, grade: grade.id });
+        const savedClassroom = await classroom.save();
+        return await savedClassroom;
+      } catch (error) {
+        throw error;
+      }
     },
 
     ///////////////////////////////////////////////////////////////
 
-    addStudentToGrade: async (_, { gradeId, studentId }) => {
+    addStudentToGrade: async (_, { gradeNumber, studentCI }) => {
+      //------------------------------------
       try {
-        const grade = await findGrade(gradeId);
-        grade.students.unshift(studentId);
+        const student = await Student.findOne({ ci: studentCI });
+        if (!student) throw new Error("Student not found");
+        const grade = await findGrade(gradeNumber);
+        grade.students.unshift(student.id);
         await grade.save();
 
         return await grade.populate("students").execPopulate();
@@ -96,18 +94,18 @@ const resolvers = {
       }
     },
 
-    addStudentToClassroom: async (_, { classroomId, studentId }) => {
+    addStudentToClassroom: async (_, { gradeNumber, section, studentCI }) => {
       try {
-        const classroom = await Classroom.findById(classroomId);
-        if (!classroom) throw new Error("'classroom' id not found");
+        const grade = await findGrade(gradeNumber),
+          student = await Student.findOne({ ci: studentCI });
+        if (!student) throw new Error("student not found");
+        const classroom = await Classroom.findOneAndUpdate(
+          { grade: grade.id, section },
+          { $addToSet: { students: student.id } },
+          { new: true }
+        );
 
-        classroom.students.unshift(studentId);
-        await classroom.save();
-
-        return await classroom
-          .populate("students")
-          .populate("section")
-          .execPopulate();
+        return await classroom.populate("students").execPopulate();
       } catch (error) {
         throw error;
       }
@@ -115,24 +113,19 @@ const resolvers = {
 
     ///////////////////////////////////////////////////////////////
 
-    removeStudentFromGrade: async (_, { gradeId, studentId }) => {
+    removeStudentFromGrade: async (_, { gradeNumber, studentCI }) => {
       try {
-        const grade = await findGrade(gradeId);
+        const grade = await findGrade(gradeNumber);
+        const student = await Student.findOne({ ci: studentCI });
 
-        //? may be this is not necesary
-        if (!grade.students.includes(studentId))
-          throw new Error(
-            "The 'student' ID is not found on list 'grade.students'"
-          );
+        if (!student) throw new Error("Student not found");
+        if(!grade.students.includes(student.id)) throw new Error("The estudent is not in grade "+ gradeNumber);
 
-        await grade.update({ $pull: { students: studentId } });
-        const student = await Student.findByIdAndUpdate(
-          studentId,
-          { $unset: { curentGrade: "" } },
-          { new: true }
-        );
+        await grade.update({ $pull: { students: student.id } });
 
-        return student;
+        await student.update({ $unset: { curentGrade: "" } });
+
+        return { ...student._doc, curentGrade: { number: -1 } };
       } catch (error) {
         throw error;
       }

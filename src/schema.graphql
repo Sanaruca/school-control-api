@@ -8,7 +8,6 @@ type Query {
   students(id: ID): [Student!]!
   subjects(id: ID): [Subject!]!
   teachers(id: ID): [Teacher!]!
-  sections(id: ID): [Section!]!
   ############
   getGrade(number: Int!): Grade
   getStudent(ci: Int!): Student
@@ -20,13 +19,12 @@ type Mutation {
   createGrade(number: Int!): Grade
   createStudent(input: StudentInput!): Student!
   createTeacher(input: TeacherInput!): Teacher!
-  createSection(input: SectionInput!): Section!
-  createClassroom(sectionId: ID!): Classroom!
+  createClassroom(gradeNumber: Int!, section: String!): Classroom!
   ############
-  addStudentToGrade(gradeId: ID!, studentId: ID): Grade!
-  removeStudentFromGrade(gradeId: ID!, studentId: ID): Student!
+  addStudentToGrade(gradeNumber: Int!, studentCI: ID!): Grade!
+  removeStudentFromGrade(gradeNumber: Int!, studentCI: Int!): Student!
   ############
-  addStudentToClassroom(classroomId: ID!, studentId: ID!): Classroom!
+  addStudentToClassroom(gradeNumber: Int!, section: String!, studentCI: Int!): Classroom!
   ############
 
 }
@@ -35,23 +33,11 @@ type Mutation {
 
 type Classroom{
   id: ID!
-  section: Section!
+  grade: Grade!
+  section: String!
   students: [Student!]!
   # schedule:
   # isFavorite:
-}
-
-##################################################################
-
-type Section{
-  id: ID!
-  l: String!
-  grade: Grade!
-}
-
-input SectionInput{
-  l: String!
-  grade: ID!
 }
 
 ##################################################################

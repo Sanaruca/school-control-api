@@ -1,4 +1,4 @@
-const { Schema, model, SchemaTypes, connection} = require("mongoose");
+const { Schema, model, SchemaTypes, connection } = require("mongoose");
 const Student = require("./student");
 const Classroom = require("./classroom");
 
@@ -11,26 +11,14 @@ const gradeSchema = new Schema({
 let cache;
 let studentId;
 
-// check Student is found // for addStudent
-gradeSchema.pre("save", async function () {
-  try {
-    if (!this.students.length) return;
 
-    studentId = this.students[0];
-
-    const student = await Student.findById(studentId);
-    if (!student) throw new Error("Student id not found");
-  } catch (error) {
-    throw error;
-  }
-});
-
-// check unique student in Model // for addStudent
+// check unique student in this Model // for addStudent
 gradeSchema.pre("save", async function () {
   try {
     if (!this.students.length) return;
 
     const isFound = await Grade.findOne({ students: this.students[0] });
+
     if (isFound) throw new Error("Student is already on the list");
   } catch (error) {
     throw error;
@@ -41,22 +29,27 @@ gradeSchema.pre("save", async function () {
 
 // delete student from classroom.students
 gradeSchema.pre("update", async function (next) {
-  const update = this._update
-  console.log("-------------------------------------------")
+  const update = this._update;
   const studentId = update.$pull.students;
-  console.log(studentId)
-  console.log("-------------------------------------------")
-  const classroom = await Classroom.findOneAndUpdate({students: studentId}, update)
-  console.log(classroom)
-  next()
-})
+  const classroom = await Classroom.findOneAndUpdate(
+    { students: studentId },
+    update
+  );
+  console.log(classroom);
+  next();
+});
 
 //////////////////////////////////////////////////////////////////////
 
 // update curentGrade for Student
 gradeSchema.post("save", async function (doc) {
   try {
-    await Student.findByIdAndUpdate(studentId, {curentGrade: doc._id})
+    console.log("-----------------------------------------")
+    console.log(doc)
+    console.log("-----------------------------------------")
+    console.log(studentId)
+    studentId = doc.students[0]
+    await Student.findByIdAndUpdate(studentId, { curentGrade: doc._id });
   } catch (error) {
     throw error;
   }
