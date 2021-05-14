@@ -26,7 +26,7 @@ type Mutation {
   ############
   addStudentToClassroom(gradeNumber: Int!, section: String!, studentCI: Int!): Classroom!
   ############
-
+  upgradeStudent(studentCI: Int!): Grade!
 }
 
 ##################################################################

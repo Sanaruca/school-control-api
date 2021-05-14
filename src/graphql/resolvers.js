@@ -5,16 +5,6 @@ const Student = require("../models/student");
 const Teacher = require("../models/teacher");
 const Classroom = require("../models/classroom");
 
-const findGrade = async (number) => {
-  try {
-    const grade = await Grade.findOne({ number });
-    if (!grade) throw new Error("Grade not found");
-    return grade;
-  } catch (error) {
-    throw error;
-  }
-};
-
 const resolvers = {
   Date: DateScalar,
   Query: {
@@ -79,20 +69,11 @@ const resolvers = {
 
     ///////////////////////////////////////////////////////////////
 
-    addStudentToGrade: async (_, { gradeNumber, studentCI }) => {
-      //------------------------------------
-      try {
-        const student = await Student.findOne({ ci: studentCI });
-        if (!student) throw new Error("Student not found");
-        const grade = await findGrade(gradeNumber);
-        grade.students.unshift(student.id);
-        await grade.save();
+    addStudentToGrade,
+    removeStudentFromGrade,
+    upgradeStudent,
 
-        return await grade.populate("students").execPopulate();
-      } catch (error) {
-        throw error;
-      }
-    },
+    ///////////////////////////////////////////////////////////////
 
     addStudentToClassroom: async (_, { gradeNumber, section, studentCI }) => {
       try {
@@ -113,26 +94,82 @@ const resolvers = {
 
     ///////////////////////////////////////////////////////////////
 
-    removeStudentFromGrade: async (_, { gradeNumber, studentCI }) => {
-      try {
-        const grade = await findGrade(gradeNumber);
-        const student = await Student.findOne({ ci: studentCI });
-
-        if (!student) throw new Error("Student not found");
-        if(!grade.students.includes(student.id)) throw new Error("The estudent is not in grade "+ gradeNumber);
-
-        await grade.update({ $pull: { students: student.id } });
-
-        await student.update({ $unset: { curentGrade: "" } });
-
-        return { ...student._doc, curentGrade: { number: -1 } };
-      } catch (error) {
-        throw error;
-      }
-    },
-
-    ///////////////////////////////////////////////////////////////
   },
 };
+
+////////////////////////////////////////////////////////////////////
+
+async function findStudentByCI(ci) {
+  try {
+    const student = await Student.findOne({ ci });
+    if (!student) throw new Error("Student not found");
+    return student;
+  } catch (error) {
+    throw error;
+  }
+}
+
+async function findGrade(number) {
+  try {
+    const grade = await Grade.findOne({ number });
+    if (!grade) throw new Error("Grade not found");
+    return grade;
+  } catch (error) {
+    throw error;
+  }
+}
+
+////////////////////////////////////////////////////////////////////
+
+async function addStudentToGrade(_, { gradeNumber, studentCI }) {
+  //------------------------------------
+  try {
+    const student = await findStudentByCI(studentCI);
+    const grade = await findGrade(gradeNumber);
+    grade.students.unshift(student.id);
+    await grade.save();
+
+    return await grade.populate("students").execPopulate();
+  } catch (error) {
+    throw error;
+  }
+}
+
+async function removeStudentFromGrade(_, { gradeNumber, studentCI }) {
+  try {
+    const grade = await findGrade(gradeNumber);
+    const student = await findStudentByCI(studentCI);
+
+    if (!grade.students.includes(student.id))
+      throw new Error("The estudent is not in grade " + gradeNumber);
+
+    await grade.update({ $pull: { students: student.id } });
+
+    await student.update({ $unset: { curentGrade: "" } });
+
+    return { ...student._doc, curentGrade: { number: -1 } };
+  } catch (error) {
+    throw error;
+  }
+}
+
+async function upgradeStudent(_, { studentCI }) {
+  try {
+    const student = await (await findStudentByCI(studentCI))
+      .populate("curentGrade")
+      .execPopulate();
+    if (!student.curentGrade)
+      throw new Error("The student is not assigned in any grade");
+
+    const { number: curentGrade } = student.curentGrade,
+      args = { gradeNumber: curentGrade, studentCI: student.ci };
+
+    await removeStudentFromGrade(null, args);
+    const grade = await addStudentToGrade(null, { ...args, gradeNumber: curentGrade + 1 });
+    return grade;
+  } catch (error) {
+    throw error;
+  }
+}
 
 module.exports = resolvers;

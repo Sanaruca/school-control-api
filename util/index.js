@@ -1,3 +1,5 @@
+const $btnGetAllData = document.querySelector("button.get-all-data");
+////////////////////////////////////////////////////////////////////
 const $studentsTable = document.querySelector(".students-table"),
   $btnGetStudents = document.querySelector("button.get-students");
 ///////////////////////////////////////////////////////////////////
@@ -11,11 +13,15 @@ const $classroomsTable = document.querySelector(".classrooms-table"),
 $btnGetStudents.onclick = async () => await printStudnetsTable();
 $btnGetGrades.onclick = async () => await printGradesTable();
 $btnGetClassrooms.onclick = async () => await printClassroomsTable();
+$btnGetAllData.onclick = () => {
+  $btnGetStudents.click();
+  $btnGetGrades.click();
+  $btnGetClassrooms.click();
+};
 
 async function printClassroomsTable() {
   clearTableData($classroomsTable);
   const classrooms = await getClassrooms();
-  console.log(classrooms);
   classrooms.forEach((classroom) => {
     const newRow = document.createElement("tr");
     newRow.innerHTML = `
@@ -23,8 +29,8 @@ async function printClassroomsTable() {
     <td>${classroom.section}</td>
     `;
     classroom.students.forEach((student) => {
-      console.log(student);
-      newRow.innerHTML+= `<td>${student.first_name} ${student.last_name}</td>`;
+      console.log("student:", student);
+      newRow.innerHTML += `<td>${student.first_name} ${student.last_name}</td>`;
     });
 
     $classroomsTable.appendChild(newRow);
@@ -40,7 +46,9 @@ async function printStudnetsTable() {
     newRow.innerHTML = `
     <td>${student.ci}</td>
     <td>${student.first_name} ${student.last_name}</td>
-    <td>${student.curentGrade ? student.curentGrade.number : "not asigned"}</td>
+    <td>${
+      student.curentGrade ? student.curentGrade.number : "not assigned"
+    }</td>
     `;
     $studentsTable.appendChild(newRow);
   });
@@ -55,7 +63,11 @@ async function printGradesTable() {
     $gradeNumberTr.innerHTML = `<td>${grade.number}</td>`;
 
     grade.students.forEach((student) => {
-      $gradeNumberTr.innerHTML += `<td>${student.first_name} ${student.last_name}</td>`;
+      $gradeNumberTr.innerHTML += `
+      <td>${student.first_name} ${student.last_name}</td>
+      <td>${student.ci}</td>
+      
+      `;
     });
     $gradesTable.appendChild($gradeNumberTr);
   });
@@ -108,6 +120,7 @@ async function getGrades() {
             students {
               first_name
               last_name
+              ci
             }
           }
         }        

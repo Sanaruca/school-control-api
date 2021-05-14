@@ -44,10 +44,6 @@ gradeSchema.pre("update", async function (next) {
 // update curentGrade for Student
 gradeSchema.post("save", async function (doc) {
   try {
-    console.log("-----------------------------------------")
-    console.log(doc)
-    console.log("-----------------------------------------")
-    console.log(studentId)
     studentId = doc.students[0]
     await Student.findByIdAndUpdate(studentId, { curentGrade: doc._id });
   } catch (error) {
