@@ -1,3 +1,51 @@
+function replaceBetween(origin, startIndex, endIndex, insertion) {
+  return (
+    origin.substring(0, startIndex) + insertion + origin.substring(endIndex)
+  );
+}
+
+function toggleHourFormat(hours) {
+  if (hours.length === 7) {
+    let meridiem = hours.substr(-2);
+    switch (meridiem) {
+      case "AM":
+        return new Date(
+          0,
+          0,
+          0,
+          Number(hours.substr(0, 2)),
+          Number(hours.substr(3, 2))
+        )
+          .toTimeString()
+          .substr(0, 5);
+        break;
+
+      case "PM":
+        return new Date(
+          0,
+          0,
+          0,
+          Number(hours.substr(0, 2)) + 12,
+          Number(hours.substr(3, 2))
+        )
+          .toTimeString()
+          .substr(0, 5);
+        break;
+    }
+  } else {
+    let hhmm = hours.split(":");
+    let h = new Date(
+      0,
+      0,
+      0,
+      Number(hhmm[0]),
+      Number(hhmm[1])
+    ).toLocaleTimeString();
+    let test = h.split(":")[0].length < 2 ? "0" + h : h;
+    return replaceBetween(test, 5, 9, "");
+  }
+}
+
 const $btnGetAllData = document.querySelector("button.get-all-data");
 ////////////////////////////////////////////////////////////////////
 const $studentsTable = document.querySelector(".students-table"),

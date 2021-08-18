@@ -18,8 +18,14 @@ const resolvers = {
         throw new Error(error);
       }
     },
-    students: async (_, { id }) =>
-      await Student.find(id ? { _id: id } : {}).populate("curentGrade"),
+    students: async (_, { id, limit }) =>
+      {
+        const students = await Student.find(id ? { _id: id } : {}).limit(limit).populate("curentGrade") 
+        students.forEach(student => {
+          student.fullname = student.first_name + " " + student.last_name
+        });
+        return students
+      },
     teachers: async (_, { id }) => await Teacher.find(id ? { _id: id } : {}),
     classrooms: async (_, { id }) =>
       await Classroom.find(id ? { _id: id } : {})
@@ -73,6 +79,51 @@ const resolvers = {
     removeStudentFromGrade,
     upgradeStudent,
 
+    setScheduleBlock: async (_, { grade, section, weekday, input: block }) => { //------------------------------
+      try {
+        const gradeId = (await findGrade(grade)).id;
+        const classroom = await Classroom.findOne({ grade: gradeId, section });
+
+        const schedule = {
+          [weekday]: { ...block, teacher: block.teacherCI },
+        };
+
+        await classroom.update({
+          $set: {
+            schedule,
+          },
+        });
+
+        return {
+          ...(await Classroom.findById(classroom.id))._doc.schedule._doc,
+          classroom: `grade ${grade} section "${section.toUpperCase()}"`,
+        };
+      } catch (error) {
+        throw error;
+      }
+    },
+    
+    addClassBlock: async (_, { grade, section, weekday, input: block }) =>{
+      try {
+        const gradeId = (await findGrade(grade)).id;
+        const classroom = await Classroom.findOne({ grade: gradeId, section });
+        console.log("-----------------1111111--------------------")
+        // classroom.schedule.test = "tast";
+        console.log(block)
+        
+        // classroom.schedule[weekday].unshift({...block, teacher: block.teacherCI})
+
+        console.log("-----------------222222222--------------------")
+        console.log(classroom)
+
+        await classroom.update({schedule: {[weekday]:[{...block, teacher: block.teacherCI}, ...classroom.schedule[weekday]]}, weekday})
+
+      } catch (error) {
+        throw error;
+      }
+      
+    },
+
     ///////////////////////////////////////////////////////////////
 
     addStudentToClassroom: async (_, { gradeNumber, section, studentCI }) => {
@@ -93,7 +144,6 @@ const resolvers = {
     },
 
     ///////////////////////////////////////////////////////////////
-
   },
 };
 
@@ -165,7 +215,10 @@ async function upgradeStudent(_, { studentCI }) {
       args = { gradeNumber: curentGrade, studentCI: student.ci };
 
     await removeStudentFromGrade(null, args);
-    const grade = await addStudentToGrade(null, { ...args, gradeNumber: curentGrade + 1 });
+    const grade = await addStudentToGrade(null, {
+      ...args,
+      gradeNumber: curentGrade + 1,
+    });
     return grade;
   } catch (error) {
     throw error;

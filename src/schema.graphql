@@ -5,7 +5,7 @@ scalar Date
 type Query {
   grades(id: ID): [Grade!]!
   classrooms(id: ID): [Classroom!]!
-  students(id: ID): [Student!]!
+  students(id: ID, limit:Int): [Student!]!
   subjects(id: ID): [Subject!]!
   teachers(id: ID): [Teacher!]!
   ############
@@ -27,6 +27,9 @@ type Mutation {
   addStudentToClassroom(gradeNumber: Int!, section: String!, studentCI: Int!): Classroom!
   ############
   upgradeStudent(studentCI: Int!): Grade!
+  ############
+  setScheduleBlock(grade:Int!, section: String!, weekday: Weekday!, input: ClassBlockInput): Schedule!
+  addClassBlock(grade:Int!, section: String!, weekday: Weekday!, input: ClassBlockInput): Schedule!
 }
 
 ##################################################################
@@ -36,8 +39,35 @@ type Classroom{
   grade: Grade!
   section: String!
   students: [Student!]!
-  # schedule:
+  schedule: Schedule
   # isFavorite:
+}
+
+##################################################################
+
+type Schedule{
+  classroom: String!
+  monday: [ClassBlock]!
+  tuesday: [ClassBlock]!
+  wednesday: [ClassBlock]!
+  thursday: [ClassBlock]!
+  friday: [ClassBlock]!
+  satruday: [ClassBlock]!
+  sunday: [ClassBlock]!
+}
+
+type ClassBlock{
+  subject: Subject!
+  teacher: Teacher!
+  duration: String!
+  start: String!
+}
+
+input ClassBlockInput{
+  start: String!
+  duration: String!
+  subject: String!
+  teacherCI: Int!
 }
 
 ##################################################################
@@ -53,6 +83,7 @@ type Grade{
 
 type Student{
   id: ID!
+  fullname: String!
   first_name:String!
   last_name: String!
   ci: Int!
@@ -102,11 +133,11 @@ input TeacherInput{
 ##################################################################
 
 enum Weekday{
-  Monday
-  Tuesday
-  Wednesday
-  Thursday
-  Friday
-  Satruday
-  Sunday
+  monday
+  tuesday
+  wednesday
+  thursday
+  friday
+  satruday
+  sunday
 } 

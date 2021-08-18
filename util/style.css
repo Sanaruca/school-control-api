@@ -1,9 +1,33 @@
-body{
+body {
   background: #1a1a1a;
   color: #dddddd;
 }
 
-td{
-  border: #919191 1px solid;
+table tr.header-table {
+  background: #262b26;
+}
+
+td {
+  border: #2b2b2b 1px solid;
   padding: 20px;
+}
+
+section {
+  margin: 5rem;
+}
+
+button {
+  border: none;
+  padding: 5px 10px;
+}
+.btn-fetch {
+  background: #359232;
+  color: white;
+  border-radius: 6px;
+}
+
+.btn-new {
+  background: #585b4a;
+  color: #f8f8f8;
+  border-radius: 20px;
 }

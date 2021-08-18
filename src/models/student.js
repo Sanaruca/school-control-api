@@ -10,4 +10,8 @@ const studentSchema = new Schema({
   curentGrade: {type: SchemaTypes.ObjectId, ref: "Grade"}
 });
 
+studentSchema.virtual("fullname").get(function(){
+  return `${this.first_name} ${this.last_name}`
+})
+
 module.exports = model("Student", studentSchema);

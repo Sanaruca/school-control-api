@@ -1,11 +1,11 @@
 const { Schema, model, SchemaTypes, Types, connection } = require("mongoose"),
-  { ObjectId } = Types;
+  { ObjectId } = Types,
+  schedule = require("./schedule");
 const Student = require("./student");
 
 const classroomSchema = new Schema({
   grade: { type: SchemaTypes.ObjectId, ref: "Grade" },
   students: [{ type: SchemaTypes.ObjectId, ref: "Student" }],
-  schedule: { type: SchemaTypes.ObjectId, ref: "Schedule" },
   section: {
     type: String,
     minLength: 1,
@@ -13,11 +13,91 @@ const classroomSchema = new Schema({
     uppercase: true,
     trim: true,
   },
+  schedule: { type: schedule, default: () => ({}) },
   //isFavorite: Boolean,
 });
 
 let cache;
 let studentId;
+
+classroomSchema.pre("update", async function () {
+  try {
+    const { _update } = this,
+      { weekday } = _update,
+      content = _update.schedule[weekday],
+      added = content.shift(),
+      doc = await this.exec("findOne");
+
+    console.log("----------update middelware-------1111111---------");
+    console.log(weekday + ":", content);
+    console.log("---------update middelware--------2222222----------");
+    console.log(added);
+    console.log("---------update middelware--------33333333---------");
+    console.log(content);
+
+    content.forEach((classBlock) => {
+      const { duration, start } = classBlock,
+        timeStartAsArray = toggleHourFormat(start).split(":"),
+        hourStart = timeStartAsArray[0],
+        minuteStart = timeStartAsArray[1],
+        startTimeAsNumber = Number(hourStart + "." + minuteStart);
+
+      const timeStartForAddedAsArray = toggleHourFormat(added.start).split(":"),
+        hourStartForAdded = timeStartForAddedAsArray[0],
+        minuteStartForAdded = timeStartForAddedAsArray[1],
+        startTimeForAddedAsNumber = Number(hourStartForAdded + "." + minuteStartForAdded);
+
+      /////
+      let h = `${Number(duration.substr(0, 2)) + Number(start.substr(0, 2))}`,
+        m = `${Number(start.substr(3, 2)) + Number(duration.substr(-2))}`;
+      h = h.length < 2 ? "0" + h : h;
+      m = m.lengtm < 2 ? "0" + m : m;
+
+      /////
+      let h2 = `${Number(added.duration.substr(0, 2)) + Number(added.start.substr(0, 2))}`,
+      m2 = `${Number(added.start.substr(3, 2)) + Number(added.duration.substr(-2))}`;
+      h2 = h2.length < 2 ? "0" + h2 : h2;
+      m2 = m2.lengtm < 2 ? "0" + m2 : m2;
+      /////
+      let endingTimeForAdedd = toggleHourFormat(`${h2}:${m2}${added.start.substr(-2)}`);
+      // console.log("-------------",endingTimeForAdedd)
+      // endingTimeForAdedd = toggleHourFormat(endingTimeForAdedd);
+      // endingTimeForAdedd = endingTimeForAdedd.replace(/[\s.]/g, "").toUpperCase();
+
+      let endingTimeForAdeddAsArray =  endingTimeForAdedd.split(":"),
+      endingHourForAdedd = endingTimeForAdeddAsArray[0],
+      endingMinutesForAdedd = endingTimeForAdeddAsArray[1],
+      endingTimeForAdeddAsNumber = Number(endingHourForAdedd+"."+endingMinutesForAdedd);
+      /////
+
+      let endingTime = toggleHourFormat(`${h}:${m}${start.substr(-2)}`);
+      // endingTime = toggleHourFormat(endingTime);
+      // endingTime = endingTime.replace(/[\s.]/g, "").toUpperCase();
+
+      let endingTimeAsArray =  endingTime.split(":"),
+      endingHour = endingTimeAsArray[0],
+      endingMinutes = endingTimeAsArray[1],
+      endingTimeAsNumber = Number(endingHour+"."+endingMinutes);
+
+      const test = startTimeForAddedAsNumber >= endingTimeAsNumber || startTimeAsNumber >= endingTimeForAdeddAsNumber;
+
+      console.log("added:",added.start,endingTimeForAdedd);
+      console.log("added:",startTimeForAddedAsNumber, endingTimeForAdeddAsNumber);
+
+      console.log(start,endingTime);
+      console.log(startTimeAsNumber, endingTimeAsNumber);
+
+      if(!test) throw new Error("This class block cannot be added");
+    });
+    
+    content.unshift(added)
+    
+    // throw new Error("---------");
+    
+  } catch (error) {
+    throw error;
+  }
+});
 
 // verify if section's letter will not to duplicate for a grade
 classroomSchema.pre("save", async function () {
@@ -84,6 +164,59 @@ classroomSchema.pre("findOneAndUpdate", async function () {
     throw error;
   }
 });
+
+// logicg
+////////////////////////////////////////////////////////////////////////////////////////////////
+
+function replaceStringBetween(origin, startIndex, endIndex, insertion) {
+  return (
+    origin.substring(0, startIndex) + insertion + origin.substring(endIndex)
+  );
+}
+
+function toggleHourFormat(hours) {
+  if (hours.length === 7) {
+    let meridiem = hours.substr(-2);
+    switch (meridiem) {
+      case "AM":
+        return new Date(
+          0,
+          0,
+          0,
+          Number(hours.substr(0, 2)),
+          Number(hours.substr(3, 2))
+        )
+          .toTimeString()
+          .substr(0, 5);
+        break;
+
+      case "PM":
+        return new Date(
+          0,
+          0,
+          0,
+          Number(hours.substr(0, 2)) + 12,
+          Number(hours.substr(3, 2))
+        )
+          .toTimeString()
+          .substr(0, 5);
+        break;
+    }
+  } else {
+    let hhmm = hours.split(":");
+    let h = new Date(
+      0,
+      0,
+      0,
+      Number(hhmm[0]),
+      Number(hhmm[1])
+    ).toLocaleTimeString();
+    let test = h.split(":")[0].length < 2 ? "0" + h : h;
+    return replaceStringBetween(test, 5, 9, "");
+  }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////
 
 const Classroom = model("Classroom", classroomSchema);
 module.exports = Classroom;
